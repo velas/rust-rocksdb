@@ -16,8 +16,9 @@
 use std::marker::PhantomData;
 
 use crate::{
-    db::DBAccess, ffi, AsColumnFamilyRef, DBIteratorWithThreadMode, DBRawIteratorWithThreadMode,
-    Direction, Error, IteratorMode, ReadOptions, SnapshotWithThreadMode,
+    db::{DBAccess, DBVector},
+    ffi, AsColumnFamilyRef, DBIteratorWithThreadMode, DBRawIteratorWithThreadMode, Direction,
+    Error, IteratorMode, ReadOptions, SnapshotWithThreadMode,
 };
 use libc::{c_char, c_void, size_t};
 
@@ -65,6 +66,7 @@ impl<'db, DB> DBAccess for Transaction<'db, DB> {
         readopts: &ReadOptions,
     ) -> Result<Option<Vec<u8>>, Error> {
         self.get_opt(key, readopts)
+            .map(|v| v.map(|v| v.as_ref().to_vec()))
     }
 
     fn get_cf_opt<K: AsRef<[u8]>>(
@@ -74,6 +76,7 @@ impl<'db, DB> DBAccess for Transaction<'db, DB> {
         readopts: &ReadOptions,
     ) -> Result<Option<Vec<u8>>, Error> {
         self.get_cf_opt(cf, key, readopts)
+            .map(|v| v.map(|v| v.as_ref().to_vec()))
     }
 }
 
@@ -150,7 +153,7 @@ impl<'db, DB> Transaction<'db, DB> {
     /// See [`get_cf_opt`] for details.
     ///
     /// [`get_cf_opt`]: Self::get_cf_opt
-    pub fn get<K: AsRef<[u8]>>(&self, key: K) -> Result<Option<Vec<u8>>, Error> {
+    pub fn get<K: AsRef<[u8]>>(&self, key: K) -> Result<Option<DBVector>, Error> {
         self.get_opt(key, &ReadOptions::default())
     }
 
@@ -163,7 +166,7 @@ impl<'db, DB> Transaction<'db, DB> {
         &self,
         cf: &impl AsColumnFamilyRef,
         key: K,
-    ) -> Result<Option<Vec<u8>>, Error> {
+    ) -> Result<Option<DBVector>, Error> {
         self.get_cf_opt(cf, key, &ReadOptions::default())
     }
 
@@ -179,7 +182,7 @@ impl<'db, DB> Transaction<'db, DB> {
         &self,
         key: K,
         exclusive: bool,
-    ) -> Result<Option<Vec<u8>>, Error> {
+    ) -> Result<Option<DBVector>, Error> {
         self.get_for_update_opt(key, exclusive, &ReadOptions::default())
     }
 
@@ -196,7 +199,7 @@ impl<'db, DB> Transaction<'db, DB> {
         cf: &impl AsColumnFamilyRef,
         key: K,
         exclusive: bool,
-    ) -> Result<Option<Vec<u8>>, Error> {
+    ) -> Result<Option<DBVector>, Error> {
         self.get_for_update_cf_opt(cf, key, exclusive, &ReadOptions::default())
     }
 
@@ -209,7 +212,7 @@ impl<'db, DB> Transaction<'db, DB> {
         &self,
         key: K,
         readopts: &ReadOptions,
-    ) -> Result<Option<Vec<u8>>, Error> {
+    ) -> Result<Option<DBVector>, Error> {
         unsafe {
             let mut val_len: usize = 0;
             let val_ptr = ffi_try!(ffi::rocksdb_transaction_get(
@@ -222,7 +225,7 @@ impl<'db, DB> Transaction<'db, DB> {
             if val_ptr.is_null() {
                 Ok(None)
             } else {
-                let val = Vec::from_raw_parts(val_ptr as *mut u8, val_len, val_len);
+                let val = DBVector::from_c(val_ptr as *mut u8, val_len);
                 Ok(Some(val))
             }
         }
@@ -240,7 +243,7 @@ impl<'db, DB> Transaction<'db, DB> {
         cf: &impl AsColumnFamilyRef,
         key: K,
         readopts: &ReadOptions,
-    ) -> Result<Option<Vec<u8>>, Error> {
+    ) -> Result<Option<DBVector>, Error> {
         unsafe {
             let mut val_len: usize = 0;
             let val_ptr = ffi_try!(ffi::rocksdb_transaction_get_cf(
@@ -254,7 +257,7 @@ impl<'db, DB> Transaction<'db, DB> {
             if val_ptr.is_null() {
                 Ok(None)
             } else {
-                let val = Vec::from_raw_parts(val_ptr as *mut u8, val_len, val_len);
+                let val = DBVector::from_c(val_ptr as *mut u8, val_len);
                 Ok(Some(val))
             }
         }
@@ -273,7 +276,7 @@ impl<'db, DB> Transaction<'db, DB> {
         key: K,
         exclusive: bool,
         opts: &ReadOptions,
-    ) -> Result<Option<Vec<u8>>, Error> {
+    ) -> Result<Option<DBVector>, Error> {
         unsafe {
             let mut val_len = 0_usize;
             let val_ptr = ffi_try!(ffi::rocksdb_transaction_get_for_update(
@@ -287,7 +290,7 @@ impl<'db, DB> Transaction<'db, DB> {
             if val_ptr.is_null() {
                 Ok(None)
             } else {
-                let val = Vec::from_raw_parts(val_ptr as *mut u8, val_len, val_len);
+                let val = DBVector::from_c(val_ptr as *mut u8, val_len);
                 Ok(Some(val))
             }
         }
@@ -327,7 +330,7 @@ impl<'db, DB> Transaction<'db, DB> {
         key: K,
         exclusive: bool,
         opts: &ReadOptions,
-    ) -> Result<Option<Vec<u8>>, Error> {
+    ) -> Result<Option<DBVector>, Error> {
         unsafe {
             let mut val_len = 0_usize;
             let val_ptr = ffi_try!(ffi::rocksdb_transaction_get_for_update_cf(
@@ -342,7 +345,7 @@ impl<'db, DB> Transaction<'db, DB> {
             if val_ptr.is_null() {
                 Ok(None)
             } else {
-                let val = Vec::from_raw_parts(val_ptr as *mut u8, val_len, val_len);
+                let val = DBVector::from_c(val_ptr as *mut u8, val_len);
                 Ok(Some(val))
             }
         }

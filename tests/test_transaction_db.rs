@@ -394,11 +394,11 @@ fn transaction_rollback() {
         txn.set_savepoint();
         txn.put(b"k2", b"v2").unwrap();
 
-        assert_eq!(txn.get(b"k1").unwrap().unwrap(), b"v1");
-        assert_eq!(txn.get(b"k2").unwrap().unwrap(), b"v2");
+        assert_eq!(txn.get(b"k1").unwrap().unwrap().as_ref(), b"v1");
+        assert_eq!(txn.get(b"k2").unwrap().unwrap().as_ref(), b"v2");
 
         txn.rollback_to_savepoint().unwrap();
-        assert_eq!(txn.get(b"k1").unwrap().unwrap(), b"v1");
+        assert_eq!(txn.get(b"k1").unwrap().unwrap().as_ref(), b"v1");
         assert!(txn.get(b"k2").unwrap().is_none());
 
         txn.rollback().unwrap();
@@ -433,17 +433,17 @@ fn transaction_cf() {
         txn.put_cf(&cf1, b"k1", b"v1").unwrap();
         txn.put_cf(&cf2, b"k2", b"v2").unwrap();
 
-        assert_eq!(txn.get(b"k0").unwrap().unwrap(), b"v0");
+        assert_eq!(txn.get(b"k0").unwrap().unwrap().as_ref(), b"v0");
         assert!(txn.get(b"k1").unwrap().is_none());
         assert!(txn.get(b"k2").unwrap().is_none());
 
         assert!(txn.get_cf(&cf1, b"k0").unwrap().is_none());
-        assert_eq!(txn.get_cf(&cf1, b"k1").unwrap().unwrap(), b"v1");
+        assert_eq!(txn.get_cf(&cf1, b"k1").unwrap().unwrap().as_ref(), b"v1");
         assert!(txn.get_cf(&cf1, b"k2").unwrap().is_none());
 
         assert!(txn.get_cf(&cf2, b"k0").unwrap().is_none());
         assert!(txn.get_cf(&cf2, b"k1").unwrap().is_none());
-        assert_eq!(txn.get_cf(&cf2, b"k2").unwrap().unwrap(), b"v2");
+        assert_eq!(txn.get_cf(&cf2, b"k2").unwrap().unwrap().as_ref(), b"v2");
 
         txn.commit().unwrap();
     }
@@ -467,7 +467,7 @@ fn transaction_snapshot() {
         db.put(b"k2", b"v2").unwrap();
         let snapshot = txn.snapshot();
         assert!(snapshot.get(b"k2").unwrap().is_none());
-        assert_eq!(txn.get(b"k2").unwrap().unwrap(), b"v2");
+        assert_eq!(txn.get(b"k2").unwrap().unwrap().as_ref(), b"v2");
         assert_eq!(
             txn.get_for_update(b"k2", true).unwrap_err().kind(),
             ErrorKind::Busy
