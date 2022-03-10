@@ -249,6 +249,14 @@ impl Default for OptimisticTransactionOptions {
     }
 }
 
+impl Drop for OptimisticTransactionOptions {
+    fn drop(&mut self) {
+        unsafe {
+            ffi::rocksdb_optimistictransaction_options_destroy(self.inner);
+        };
+    }
+}
+
 impl OptimisticTransactionOptions {
     pub fn new() -> OptimisticTransactionOptions {
         OptimisticTransactionOptions::default()
