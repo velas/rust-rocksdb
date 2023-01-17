@@ -18,7 +18,7 @@ mod options;
 mod transaction;
 mod transaction_db;
 
-pub use optimistic_transaction_db::OptimisticTransactionDB;
+pub use optimistic_transaction_db::{OptimisticTransactionDB, OptimisticTransactionDBInner};
 pub use options::{OptimisticTransactionOptions, TransactionDBOptions, TransactionOptions};
 pub use transaction::Transaction;
 pub use transaction_db::TransactionDB;
