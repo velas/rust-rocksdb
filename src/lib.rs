@@ -125,7 +125,7 @@ pub use crate::{
     snapshot::{Snapshot, SnapshotWithThreadMode},
     sst_file_writer::SstFileWriter,
     transactions::{
-        OptimisticTransactionDB, OptimisticTransactionOptions, Transaction, TransactionDB,
+        OptimisticTransactionDB, OptimisticTransactionDBInner, OptimisticTransactionOptions, Transaction, TransactionDB,
         TransactionDBOptions, TransactionOptions,
     },
     write_batch::{WriteBatch, WriteBatchIterator, WriteBatchWithTransaction},
