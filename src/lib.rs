@@ -81,7 +81,7 @@ mod column_family;
 pub mod compaction_filter;
 pub mod compaction_filter_factory;
 mod comparator;
-mod db;
+pub mod db;
 mod db_iterator;
 mod db_options;
 mod db_pinnable_slice;
